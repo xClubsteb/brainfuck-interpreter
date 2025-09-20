@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 
 void brainfuck(void);
 char* get_bf_commands(void);
@@ -12,8 +14,91 @@ int main() {
 }
 
 void brainfuck(void) {
-    char* brainfuck_string = get_bf_commands();
-    printf("input_string: %s\n", brainfuck_string);
+    uint8_t memory[30000] = {0U};
+    uint8_t* memPtr = &memory[0];
+    size_t strpos = 0;
+    long memoryPos = 0;
+
+    char* brainfuck_string = get_bf_commands(); //dont forget to free it myself in the future!!!
+    size_t str_length = strlen(brainfuck_string);
+
+    while (strpos < str_length) {
+        char cmd = brainfuck_string[strpos];
+
+        switch (cmd) {
+            case '+':
+                (*memPtr)++;
+                break;
+            case '-':
+                (*memPtr)--;
+                break;
+            case '>':
+                memPtr++;
+                memoryPos++;
+                if (memoryPos > 29999) {
+                    printf("Error:  memPtr out of bounds");
+                    free(brainfuck_string);
+                    exit(1);
+                }
+                break;
+            case '<':
+                memPtr--;
+                memoryPos--;
+                if (memoryPos < 0) {
+                    printf("Error: memPtr out of bounds");
+                    free(brainfuck_string);
+                    exit(1);
+                }
+                break;
+            case ',':
+                (*memPtr) = getchar();
+                break;
+            case '.':
+                int high_ascii = 126;
+                int low_ascii = 32;
+                if (*memPtr >= low_ascii && *memPtr <= high_ascii) {
+                    putchar(*memPtr);
+                }
+                else {
+                    printf("output: %02X", *memPtr);
+                }
+                break;
+            case '[':
+                if (*memPtr == 0) {   // skip loop if current cell is zero
+                    int loop = 1;
+                    while (loop > 0) {
+                        strpos++;
+                        if (strpos >= str_length) {
+                            printf("Error: unmatched [\n");
+                            free(brainfuck_string);
+                            exit(1);
+                        }
+                        if (brainfuck_string[strpos] == '[') loop++;
+                        else if (brainfuck_string[strpos] == ']') loop--;
+                    }
+                }
+                break;
+
+            case ']':
+                if (*memPtr != 0) {   // jump back if current cell is non-zero
+                    int loop = 1;
+                    while (loop > 0) {
+                        if (strpos == 0) {
+                            printf("Error: unmatched ]\n");
+                            free(brainfuck_string);
+                            exit(1);
+                        }
+                        strpos--;
+                        if (brainfuck_string[strpos] == ']') loop++;
+                        else if (brainfuck_string[strpos] == '[') loop--;
+                    }
+                }
+                break;
+        }
+        strpos++;
+    }
+    free(brainfuck_string);
+
 }
 
 char* get_bf_commands(void){

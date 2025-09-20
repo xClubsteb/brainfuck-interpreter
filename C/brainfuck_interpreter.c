@@ -13,6 +13,7 @@ int main() {
 
 void brainfuck(void) {
     char* brainfuck_string = get_bf_commands();
+    printf("input_string: %s\n", brainfuck_string);
 }
 
 char* get_bf_commands(void){
@@ -26,9 +27,32 @@ char* get_bf_commands(void){
     printf("size: %li\n", file_size);
     printf("string size: %li\n", string_size);
 
-    char* string = malloc(sizeof(char) * string_size + 1);
+    char* string = malloc(sizeof(char) * (string_size + 1));
+    if (string == NULL) {
+        return NULL;
+    }
 
-    
+    FILE* fp = fopen("input.txt", "r");
+    if (fp == NULL) {
+        printf("File Not Found!\n");
+        free(string);
+        return NULL;
+    }
+
+    const char cmds[8] = {'>', '<', '+', '-', '.', ',', '[', ']'};
+    int ch;
+    size_t str_ptr = 0;
+    while((ch = fgetc(fp)) != EOF) {
+        for (int i = 0; i<8; i++) {
+            if (ch == cmds[i]) {
+                string[str_ptr++] = ch;
+                break;
+            }
+        }
+    }
+    string[str_ptr] = '\0';
+    fclose(fp);
+    return string;    
 }
 
 long find_file_size(void) {
